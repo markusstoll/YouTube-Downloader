@@ -33,6 +33,7 @@ class ControllerFactory
         'index' => '\\YoutubeDownloader\\Application\\MainController',
         'results' => '\\YoutubeDownloader\\Application\\ResultController',
         'feed' => '\\YoutubeDownloader\\Application\\FeedController',
+        'podcast' => '\\YoutubeDownloader\\Application\\PodcastController',
     ];
 
     /**
