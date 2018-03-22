@@ -69,32 +69,35 @@ class PodcastController extends ControllerAbstract
 	$rssChannel->appendChild($titleElement);
 
         $url=$root->getElementsByTagName('link')->item(0)->getAttributeNode('href')->nodeValue;
-	$tElement=$rssDom->createElement("link");
-	$tElement->setAttribute("href", $url);
-	$rssChannel->appendChild($tElement);
+	$linkElement=$rssDom->createElement("link");
+	$linkElement->setAttribute("href", $url);
+	$rssChannel->appendChild($linkElement);
 
-	$tElement=$rssDom->createElement("category");
-	$tElement->appendChild($rssDom->createTextNode("TV & Film"));
-	$rssChannel->appendChild($titleElement);
+	$categoryElement=$rssDom->createElement("category");
+	$categoryElement->appendChild($rssDom->createTextNode("TV & Film"));
+	$rssChannel->appendChild($categoryElement);
 
-	$tElement=$rssDom->createElement("itunes:category");
-	$tElement->appendChild($rssDom->createTextNode("TV & Film"));
-	$rssChannel->appendChild($titleElement);
+	$itunesCategoryElement=$rssDom->createElement("itunes:category");
+	$itunesCategoryElement->appendChild($rssDom->createTextNode("TV & Film"));
+	$rssChannel->appendChild($itunesCategoryElement);
 
-	$tElement=$rssDom->createElement("itunes:subtitle");
-	$tElement->appendChild($rssDom->createTextNode($title));
-	$rssChannel->appendChild($titleElement);
+	$itunesSubtitleElement=$rssDom->createElement("itunes:subtitle");
+	$itunesSubtitleElement->appendChild($rssDom->createTextNode($title));
+	$rssChannel->appendChild($itunesSubtitleElement);
 
-	$tElement=$rssDom->createElement("generator");
-	$tElement->appendChild($rssDom->createTextNode("Youtube RSS Generator"));
-	$rssChannel->appendChild($titleElement);
+	$generatorElement=$rssDom->createElement("generator");
+	$generatorElement->appendChild($rssDom->createTextNode("Youtube RSS Generator"));
+	$rssChannel->appendChild($generatorElement);
 
         $entries=$root->getElementsByTagName('entry');
 
-	// TODO image, description
+	// TODO image, description, updated, published
         
         // Loop trough childNodes
         foreach ($entries as $entry) {
+            $item = $rssDom->createElement("item");
+            $rssChannel->appendChild($item);
+            
             $url=$entry->getElementsByTagName('link')->item(0)->getAttributeNode('href')->nodeValue;
             $title=$entry->getElementsByTagName('title')->item(0)->nodeValue;
             
@@ -105,49 +108,57 @@ class PodcastController extends ControllerAbstract
                 $redirect_url = $full_info->getUrl();
                 $type = $full_info->getType();
             
-            
-                $original_media = $entry->getElementsByTagNameNS('http://search.yahoo.com/mrss/', 'group')->item(0);
-                $original_content = $original_media
-                    ->getElementsByTagNameNS('http://search.yahoo.com/mrss/', 'content')->item(0);
-
+           
                 $size = $this->getSize($redirect_url, $config, $toolkit);
                 // an enclosure element must have the attributes: url, length and type
-                $enclosure_url = $dom->createAttribute('url');
+                $enclosure_url = $rssDom->createAttribute('url');
                 $enclosure_url->
-                    appendChild($dom->createTextNode($site . 'getvideo.php?videoid='
+                    appendChild($rssDom->createTextNode($site . 'getvideo.php?videoid='
                                                      . $video_info->getVideoId() . '&format=' . $_GET['format']));
-                $enclosure_length = $dom->createAttribute('length');
+                $enclosure_length = $rssDom->createAttribute('length');
                 $enclosure_length->appendChild($dom->createTextNode($size));
-                $enclosure_type = $dom->createAttribute('type');
+                $enclosure_type = $rssDom->createAttribute('type');
                 $enclosure_type->appendChild($dom->createTextNode($type));
-                $enclosure = $dom->createElementNS('http://search.yahoo.com/mrss/', 'content');
+
+                $enclosure = $rssDom->createElement('enclosure');
                 $enclosure->appendChild($enclosure_url);
                 $enclosure->appendChild($enclosure_length);
                 $enclosure->appendChild($enclosure_type);
-                $entry->replaceChild($enclosure, $original_media);
 
-                // add proxy elements
-
-                $enclosure_proxy_url = $dom->createAttribute('url');
-                $enclosure_proxy_url->appendChild($dom->createTextNode($site . 'getvideo.php?videoid='
-                                                                       . $video_info->getVideoId()
-                                                                       . '&format=' . $_GET['format']
-                                                                       . '&proxy=true'));
-                $enclosure_proxy_length = $dom->createAttribute('length');
-                $enclosure_proxy_length->appendChild($dom->createTextNode($size));
-                $enclosure_proxy_type = $dom->createAttribute('type');
-                $enclosure_proxy_type->appendChild($dom->createTextNode($type));
-                $enclosure_proxy = $dom->createElementNS('http://search.yahoo.com/mrss/', 'content');
-                $enclosure_proxy->appendChild($enclosure_proxy_url);
-                $enclosure_proxy->appendChild($enclosure_proxy_length);
-                $enclosure_proxy->appendChild($enclosure_proxy_type);
-                $entry->appendChild($enclosure_proxy);
+                $entry->appendChild($enclosure);
+                
+                
             }
+
+            $guid = $rssDom->createElement("guid");
+            $guid->appendChild($rssDom->createTextNode($video_id));
+            $item->appendChild($guid);
+
+            $itemTitle = $rssDom->createElement("title");
+            $itemTitle->appendChild($rssDom->createTextNode($entry->getElementsByTagName('title')->item(0)->nodeValue));
+            $item->appendChild($itemTitle);
+            
+            $description = $rssDom->createElement("description");
+            $description->appendChild($rssDom->createTextNode($entry->getElementsByTagName('media:group')->item(0)->getElementsByTagName('media:description')->item(0)->nodeValue));
+            $item->appendChild($description);
+            
+            $link = $rssDom->createElement("link");
+            $link->appendChild($rssDom->createTextNode($entry->getElementsByTagName('link')->item(0)->getAttributeNode('href')->nodeValue));
+            $item->appendChild($link);
+        
+            // pubDate
+            // 
+            ///       <itunes:subtitle>Third Parties: Last Week Tonight with John Oliver (HBO)</itunes:subtitle>
+      //<itunes:image href="https://i.ytimg.com/vi/k3O01EfM5fU/maxresdefault.jpg"></itunes:image>
+      //<itunes:duration>18:39</itunes:duration>
+      //<itunes:order>49</itunes:order>
+
+            
+
         }
         header('Content-Type: text/xml; charset=utf-8', true);
         echo $rssDom->saveXML();
 
-        echo $dom->saveXML();
         exit;
     }
 }
