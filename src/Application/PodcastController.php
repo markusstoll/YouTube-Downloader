@@ -55,6 +55,7 @@ class PodcastController extends ControllerAbstract
         }
 
         $root=$dom->documentElement;
+        
         $rssDom=new \DOMDocument();
 	$rssRoot=$rssDom->createElement("rss");
 	$rssRoot->setAttribute("version", "2.0");
@@ -116,9 +117,9 @@ class PodcastController extends ControllerAbstract
                     appendChild($rssDom->createTextNode($site . 'getvideo.php?videoid='
                                                      . $video_info->getVideoId() . '&format=' . $_GET['format']));
                 $enclosure_length = $rssDom->createAttribute('length');
-                $enclosure_length->appendChild($dom->createTextNode($size));
+                $enclosure_length->appendChild($rssDom->createTextNode($size));
                 $enclosure_type = $rssDom->createAttribute('type');
-                $enclosure_type->appendChild($dom->createTextNode($type));
+                $enclosure_type->appendChild($rssDom->createTextNode($type));
 
                 $enclosure = $rssDom->createElement('enclosure');
                 $enclosure->appendChild($enclosure_url);
@@ -156,7 +157,7 @@ class PodcastController extends ControllerAbstract
             
 
         }
-        header('Content-Type: text/xml; charset=utf-8', true);
+        header('Content-Type: text/plain; charset=utf-8', true);
         echo $rssDom->saveXML();
 
         exit;
